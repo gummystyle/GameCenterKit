@@ -7,15 +7,15 @@ import UIKit
 /// on global window lookups.
 public struct PresenterReader<Content: View>: View {
   private let content: (@escaping @MainActor () -> UIViewController?) -> Content
-  
+
   @State private var presenter: UIViewController?
-  
+
   public init(
     @ViewBuilder content: @escaping (@escaping @MainActor () -> UIViewController?) -> Content
   ) {
     self.content = content
   }
-  
+
   public var body: some View {
     content { [weak presenter] in
       presenter
@@ -30,11 +30,11 @@ public struct PresenterReader<Content: View>: View {
 
 private struct PresenterResolver: UIViewControllerRepresentable {
   let onResolve: @MainActor (UIViewController) -> Void
-  
+
   func makeUIViewController(context: Context) -> UIViewController {
     UIViewController()
   }
-  
+
   func updateUIViewController(
     _ uiViewController: UIViewController,
     context: Context
@@ -44,4 +44,3 @@ private struct PresenterResolver: UIViewControllerRepresentable {
     }
   }
 }
-

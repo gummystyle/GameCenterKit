@@ -40,39 +40,58 @@ public actor GameCenterService {
   public func authenticate(
     presenter: (@MainActor () -> UIViewController?)? = nil
   ) async throws -> Player {
-    try await withCheckedThrowingContinuation { continuation in
+    // Fast-path: already authenticated
+    if GKLocalPlayer.local.isAuthenticated {
       let player = GKLocalPlayer.local
-      player.authenticateHandler = { viewController, error in
-        if let error {
-          continuation.resume(throwing: Self.map(error))
-          return
-        }
+      return Player(displayName: player.displayName, playerID: player.gamePlayerID)
+    }
 
-        if let viewController {
-          Task { @MainActor in
-            let presenter = presenter?() ?? Self.topViewController()
-            guard let presenter else {
-              continuation.resume(throwing: GameCenterKitError.invalidPresentationContext)
-              return
-            }
-            presenter.present(viewController, animated: true)
+    // Coalesce concurrent authenticate calls onto the same in-flight task
+    if let task = authTask {
+      return try await task.value
+    }
+
+    let task = Task { () throws -> Player in
+      try await withCheckedThrowingContinuation { continuation in
+        let player = GKLocalPlayer.local
+        player.authenticateHandler = { viewController, error in
+          if let error {
+            continuation.resume(throwing: Self.map(error))
+            return
           }
-          // Handler will be called again after user interaction.
-          return
-        }
 
-        if player.isAuthenticated {
-          self.achievementsCache.removeAll()
-          continuation.resume(
-            returning: Player(
-              displayName: player.displayName,
-              playerID: player.gamePlayerID
+          if let viewController {
+            Task { @MainActor in
+              let presenter = presenter?() ?? Self.topViewController()
+              guard let presenter else {
+                continuation.resume(throwing: GameCenterKitError.invalidPresentationContext)
+                return
+              }
+              presenter.present(viewController, animated: true)
+            }
+            // Handler will be called again after user interaction.
+            return
+          }
+
+          if player.isAuthenticated {
+            self.achievementsCache.removeAll()
+            continuation.resume(
+              returning: Player(
+                displayName: player.displayName,
+                playerID: player.gamePlayerID
+              )
             )
-          )
-        } else {
-          continuation.resume(throwing: GameCenterKitError.cancelled)
+          } else {
+            continuation.resume(throwing: GameCenterKitError.cancelled)
+          }
         }
       }
+    }
+
+    authTask = task
+    do {
+      defer { self.authTask = nil }
+      return try await task.value
     }
   }
 
@@ -318,6 +337,7 @@ public actor GameCenterService {
 
   private var achievementsCache: [String: GKAchievement] = [:]
   private var lastAchievementsLoad = Date.distantPast
+  private var authTask: Task<Player, Error>?
 }
 
 /// Single shared delegate for Apple's dashboard view controller that dismisses on finish.
