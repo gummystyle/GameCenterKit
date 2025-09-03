@@ -32,9 +32,9 @@ A lightweight Swift Package that wraps Apple GameKit to make Game Center integra
 
 ## Quick Start
 
-### 1) Authenticate the local player
+### 1) Authenticate the local player (SwiftUI)
 
-Using the injectable `GameCenterClient` in SwiftUI:
+Using `PresenterReader` to obtain a presenter closure without global lookups:
 
 ```swift
 import SwiftUI
@@ -44,47 +44,45 @@ struct ContentView: View {
   @Environment(\.gameCenterClient) private var gameCenter
 
   var body: some View {
-    Button("Sign in to Game Center") {
-      Task {
-        do {
-          let presenter: @MainActor () -> UIViewController? = { topViewController() }
-          let player = try await gameCenter.authenticate(presenter)
-          print("Authenticated:", player.displayName)
-        } catch {
-          print("Auth failed:", error)
+    PresenterReader { presenter in
+      Button("Sign in to Game Center") {
+        Task {
+          do {
+            let player = try await gameCenter.authenticate(presenter)
+            print("Authenticated:", player.displayName)
+          } catch {
+            print("Auth failed:", error)
+          }
         }
       }
     }
   }
 }
-
-@MainActor
-func topViewController() -> UIViewController? {
-  UIApplication.shared.connectedScenes
-    .compactMap { $0 as? UIWindowScene }
-    .flatMap { $0.windows }
-    .first(where: { $0.isKeyWindow })?
-    .rootViewController
-}
 ```
 
-You can also call the service directly:
+You can also call the service directly (falls back to a best-effort presenter lookup if not provided):
 
 ```swift
 let player = try await GameCenterService.shared.authenticate()
 ```
 
-### 2) Present the Game Center dashboard
+### 2) Present the Game Center dashboard (SwiftUI)
 
 ```swift
-// Leaderboards list
-try await gameCenter.presentDashboard(.leaderboards(), topViewController)
-
-// Specific leaderboard
-try await gameCenter.presentDashboard(.leaderboards(LeaderboardID("com.yourapp.leaderboard")), topViewController)
-
-// Achievements
-try await gameCenter.presentDashboard(.achievements, topViewController)
+// With PresenterReader
+PresenterReader { presenter in
+  VStack {
+    Button("Leaderboards") {
+      Task { try await gameCenter.presentDashboard(.leaderboards(), presenter) }
+    }
+    Button("Specific Leaderboard") {
+      Task { try await gameCenter.presentDashboard(.leaderboards(LeaderboardID("com.yourapp.leaderboard")), presenter) }
+    }
+    Button("Achievements") {
+      Task { try await gameCenter.presentDashboard(.achievements, presenter) }
+    }
+  }
+}
 ```
 
 ### 3) Submit a score
@@ -214,4 +212,3 @@ do {
 ## License
 
 MIT — see `LICENSE` for details.
-

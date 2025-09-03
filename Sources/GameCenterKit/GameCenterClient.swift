@@ -86,6 +86,18 @@ public struct GameCenterClient: Sendable {
       }
     )
   }()
+
+  /// A preview/mock client with no-op behavior, suitable for SwiftUI previews.
+  public static let preview: GameCenterClient = .init(
+    isAuthenticated: { false },
+    authenticate: { _ in Player(displayName: "Preview", playerID: "PREVIEW") },
+    presentDashboard: { _, _ in },
+    submitScore: { _, _, _ in },
+    reportAchievement: { _, _, _ in },
+    loadAchievements: { _ in [] },
+    resetAchievements: {},
+    setAccessPoint: { _, _, _ in }
+  )
 }
 
 public extension EnvironmentValues {
