@@ -252,14 +252,22 @@ public actor GameCenterService {
 
   /// Maps a raw error to a ``GameCenterKitError`` when possible.
   static func map(_ error: Error) -> Error {
-    if let gameKitError = error as? GKError {
-      // TODO: map more errors?
-      switch gameKitError.errorCode {
-      case GKError.notAuthenticated.rawValue:
+    let ns = error as NSError
+    if ns.domain == GKErrorDomain, let code = GKError.Code(rawValue: ns.code) {
+      switch code {
+      case .notAuthenticated:
         return GameCenterKitError.notAuthenticated
+      case .cancelled, .userDenied:
+        return GameCenterKitError.cancelled
+      case .apiNotAvailable:
+        return GameCenterKitError.gameCenterUnavailable
       default:
-        return GameCenterKitError.underlyingError(gameKitError.localizedDescription)
+        return GameCenterKitError.underlyingError(ns.localizedDescription)
       }
+    }
+
+    if let gameKitError = error as? GKError {
+      return GameCenterKitError.underlyingError(gameKitError.localizedDescription)
     }
 
     return error
