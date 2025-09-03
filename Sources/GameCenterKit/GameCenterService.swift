@@ -288,11 +288,30 @@ public actor GameCenterService {
   /// Used as a best-effort fallback when no presenter closure is provided.
   @MainActor
   static func topViewController() -> UIViewController? {
-    UIApplication.shared.connectedScenes
+    let root = UIApplication.shared.connectedScenes
       .compactMap { $0 as? UIWindowScene }
       .flatMap { $0.windows }
       .first(where: { $0.isKeyWindow })?
       .rootViewController
+    return topViewController(from: root)
+  }
+
+  @MainActor
+  static func topViewController(from root: UIViewController?) -> UIViewController? {
+    guard let root else { return nil }
+    if let presented = root.presentedViewController {
+      return topViewController(from: presented)
+    }
+    if let nav = root as? UINavigationController {
+      return topViewController(from: nav.visibleViewController ?? nav.topViewController) ?? nav
+    }
+    if let tab = root as? UITabBarController {
+      return topViewController(from: tab.selectedViewController) ?? tab
+    }
+    if let split = root as? UISplitViewController {
+      return topViewController(from: split.viewControllers.last) ?? split
+    }
+    return root
   }
 
   // MARK: - Caches
