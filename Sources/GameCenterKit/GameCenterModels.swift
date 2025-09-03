@@ -8,6 +8,13 @@
 import Foundation
 import GameKit
 
+/// A type-safe identifier for a Game Center leaderboard.
+///
+/// Wraps the string identifier you configure in App Store Connect.
+/// Using a dedicated type helps avoid mixing up identifiers.
+///
+/// - SeeAlso: ``AchievementID``
+/// - SeeAlso: ``DashboardMode``
 public struct LeaderboardID: RawRepresentable, Hashable, Sendable {
   public let rawValue: String
 
@@ -20,6 +27,9 @@ public struct LeaderboardID: RawRepresentable, Hashable, Sendable {
   }
 }
 
+/// A type-safe identifier for a Game Center achievement.
+///
+/// Wraps the string identifier you configure in App Store Connect.
 public struct AchievementID: RawRepresentable, Hashable, Sendable {
   public let rawValue: String
 
@@ -32,6 +42,7 @@ public struct AchievementID: RawRepresentable, Hashable, Sendable {
   }
 }
 
+/// Errors specific to GameCenterKit and bridged GameKit failures.
 public enum GameCenterKitError: LocalizedError, Sendable {
   case notAuthenticated
   case cancelled
@@ -55,16 +66,24 @@ public enum GameCenterKitError: LocalizedError, Sendable {
   }
 }
 
+/// Dashboard type to present via Game Center UI.
 public enum DashboardMode: Sendable, Equatable {
   case leaderboards(LeaderboardID? = nil)
   case achievements
 }
 
-/// Lightweight value type for Achievements so your app doesn't need to import GameKit in most places.
+/// Lightweight value type for achievements so your app doesn't need to import GameKit in most places.
+///
+/// This value mirrors the essential fields from ``GKAchievement`` and is safe
+/// to pass across concurrency boundaries.
 public struct AchievementProgress: Equatable, Sendable {
+  /// The achievement identifier.
   public var id: AchievementID
+  /// Completion percentage in the range 0...100.
   public var percent: Double
+  /// Whether the achievement is fully completed.
   public var isCompleted: Bool
+  /// Whether Game Center should show a completion banner when reported.
   public var showsCompletionBanner: Bool
 
   public init(
@@ -80,9 +99,11 @@ public struct AchievementProgress: Equatable, Sendable {
   }
 }
 
-/// Lightweight value type for the Player so your app doesn't need to import GameKit in most places.
+/// Lightweight value type for the local player so your app doesn't need to import GameKit in most places.
 public struct Player: Equatable, Sendable {
+  /// Human-readable player display name.
   public var displayName: String
+  /// Stable, opaque player identifier.
   public var playerID: String
 
   public init(displayName: String, playerID: String) {

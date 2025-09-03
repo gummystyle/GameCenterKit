@@ -9,7 +9,11 @@ import GameKit
 import SwiftUI
 
 /// SwiftUI wrapper for Apple's Game Center dashboard.
+///
+/// Use from SwiftUI with `.sheet`/`.fullScreenCover` to present leaderboards
+/// or achievements without directly interacting with UIKit.
 public struct GameCenterDashboardView: UIViewControllerRepresentable {
+  /// The dashboard content to present.
   public let mode: DashboardMode
 
   public init(mode: DashboardMode) {
@@ -37,17 +41,17 @@ public struct GameCenterDashboardView: UIViewControllerRepresentable {
     return viewController
   }
 
+  /// No-op: the dashboard manages its own content.
   public func updateUIViewController(
     _ viewController: GKGameCenterViewController,
     context: Context
-  ) {
-    // No-op: the dashboard manages its own content.
-  }
+  ) {}
 
   public func makeCoordinator() -> Coordinator {
     Coordinator()
   }
 
+  /// Delegate to dismiss the Game Center controller when finished.
   public final class Coordinator: NSObject, GKGameCenterControllerDelegate {
     public func gameCenterViewControllerDidFinish(_ gameCenterViewController: GKGameCenterViewController) {
       Task { @MainActor in
@@ -58,9 +62,15 @@ public struct GameCenterDashboardView: UIViewControllerRepresentable {
 }
 
 /// SwiftUI helper for showing Apple's floating Game Center Access Point.
+///
+/// Applies a task to configure the shared ``GKAccessPoint`` and disables the
+/// access point automatically when the modified view disappears.
 public struct GameCenterAccessPointModifier: ViewModifier {
+  /// Whether the access point is visible.
   public let isActive: Bool
+  /// Screen corner for the access point.
   public let location: GKAccessPoint.Location
+  /// Whether to show highlight content in the access point.
   public let showsHighlights: Bool
 
   public init(
@@ -87,6 +97,12 @@ public struct GameCenterAccessPointModifier: ViewModifier {
 }
 
 public extension View {
+  /// Configures the floating Game Center Access Point for this view hierarchy.
+  ///
+  /// - Parameters:
+  ///   - isActive: Whether the access point is visible.
+  ///   - location: Screen corner for the access point.
+  ///   - showsHighlights: Whether to show highlight content in the access point.
   func gameCenterAccessPoint(
     isActive: Bool,
     location: GKAccessPoint.Location = .topLeading,

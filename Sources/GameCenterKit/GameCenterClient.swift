@@ -10,17 +10,32 @@ import GameKit
 import SwiftUI
 import UIKit
 
-/// Small client facade so you can inject or mock it in your app without exposing the actor.
+/// A small client facade you can inject or mock without exposing the underlying actor.
+///
+/// Prefer using ``GameCenterClient`` in app code and tests; the implementation is provided by
+/// ``GameCenterClient/live`` which forwards to ``GameCenterService``.
 public struct GameCenterClient: Sendable {
+  /// Returns whether the local player is authenticated.
   public var isAuthenticated: @Sendable () -> Bool
+  /// Authenticates the local player, optionally providing a presenter closure.
   public var authenticate: @Sendable (_ presenter: @escaping @MainActor () -> UIViewController?) async throws -> Player
+  /// Presents the dashboard or a specific leaderboard.
   public var presentDashboard: @Sendable (_ mode: DashboardMode, _ presenter: @escaping @MainActor () -> UIViewController?) async throws -> Void
+  /// Submits a score to one or more leaderboards.
   public var submitScore: @Sendable (_ score: Int, _ leaderboards: [LeaderboardID], _ context: Int) async throws -> Void
+  /// Reports progress for an achievement.
   public var reportAchievement: @Sendable (_ id: AchievementID, _ percentComplete: Double, _ showsBanner: Bool) async throws -> Void
+  /// Loads achievements, optionally forcing a reload.
   public var loadAchievements: @Sendable (_ forceReload: Bool) async throws -> [AchievementProgress]
+  /// Resets all achievement progress.
   public var resetAchievements: @Sendable () async throws -> Void
+  /// Configures the Game Center Access Point.
   public var setAccessPoint: @Sendable (_ isActive: Bool, _ location: GKAccessPoint.Location, _ showsHighlights: Bool) async -> Void
 
+  /// Creates a ``GameCenterClient`` by supplying implementations for each operation.
+  ///
+  /// Most apps should use ``GameCenterClient/live``. Supplying a custom initializer is useful
+  /// in tests or previews.
   public init(
     isAuthenticated: @escaping @Sendable () -> Bool,
     authenticate: @escaping @Sendable (@escaping @MainActor () -> UIViewController?) async throws -> Player,
@@ -41,6 +56,7 @@ public struct GameCenterClient: Sendable {
     self.setAccessPoint = setAccessPoint
   }
 
+  /// The live client that forwards to ``GameCenterService/shared``.
   public static let live: GameCenterClient = {
     let service = GameCenterService.shared
     return GameCenterClient(
@@ -73,6 +89,7 @@ public struct GameCenterClient: Sendable {
 }
 
 public extension EnvironmentValues {
+  /// Access to the ``GameCenterClient`` via SwiftUI environment.
   var gameCenterClient: GameCenterClient {
     get { self[GameCenterClientKey.self] }
     set { self[GameCenterClientKey.self] = newValue }
@@ -86,6 +103,7 @@ private struct GameCenterClientKey: EnvironmentKey {
 #if canImport(ComposableArchitecture)
 import ComposableArchitecture
 
+/// Composable Architecture dependency key for ``GameCenterClient``.
 public enum GameCenterDependencyKey: DependencyKey {
   public static var liveValue: GameCenterClient { .live }
   public static var previewValue: GameCenterClient { .preview }
@@ -104,6 +122,7 @@ public enum GameCenterDependencyKey: DependencyKey {
 }
 
 public extension DependencyValues {
+  /// Accessor for the ``GameCenterClient`` in TCA environments.
   var gameCenter: GameCenterClient {
     get { self[GameCenterDependencyKey.self] }
     set { self[GameCenterDependencyKey.self] = newValue }

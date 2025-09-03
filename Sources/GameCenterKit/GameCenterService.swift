@@ -9,21 +9,34 @@ import Foundation
 import GameKit
 import UIKit
 
-/// Concurrency-safe facade over GameKit. Holds caches and handles authentication and presentation.
+/// Concurrency-safe facade over GameKit.
+///
+/// Handles authentication, UI presentation, score submission, achievement reporting,
+/// and access point control. Internally caches achievement data for short periods
+/// to minimize network calls.
 public actor GameCenterService {
+  /// Shared live instance for convenience.
   public static let shared = GameCenterService()
 
   public init() {}
 
   // MARK: - Authentication
 
+  /// Indicates whether the local player is currently authenticated with Game Center.
   public nonisolated var isAuthenticated: Bool {
     GKLocalPlayer.local.isAuthenticated
   }
 
-  /// Authenticate the local player. Presents Apple's sheet if needed.
-  /// - Parameter presenter: Optional closure to provide a presenting view controller.
-  /// If `nil`, we look up the keyWindow root when needed.
+  /// Authenticates the local player, presenting Apple's UI if needed.
+  ///
+  /// GameKit may provide a view controller to present. If so, the provided `presenter`
+  /// closure is used to obtain a `UIViewController` to present from; if no presenter is
+  /// supplied, the service attempts to find the key window's root view controller.
+  ///
+  /// - Parameter presenter: Optional closure returning a presenter view controller on the main actor.
+  /// - Returns: A lightweight ``Player`` value when authentication succeeds.
+  /// - Throws: ``GameCenterKitError`` if the user cancels or no valid presenter is available,
+  ///   or an underlying GameKit error.
   public func authenticate(
     presenter: (@MainActor () -> UIViewController?)? = nil
   ) async throws -> Player {
@@ -66,6 +79,13 @@ public actor GameCenterService {
   // MARK: - Dashboard
 
   /// Presents the Game Center dashboard or a specific leaderboard.
+  ///
+  /// - Parameters:
+  ///   - mode: ``DashboardMode`` describing which UI to show.
+  ///   - presenter: Optional closure returning a presenter view controller on the main actor.
+  /// - Throws: ``GameCenterKitError.notAuthenticated`` if the local player is not
+  ///   signed in, or ``GameCenterKitError.invalidPresentationContext`` if a presenter
+  ///   cannot be determined.
   public func presentDashboard(
     _ mode: DashboardMode,
     presenter: (@MainActor () -> UIViewController?)? = nil
@@ -99,6 +119,13 @@ public actor GameCenterService {
 
   // MARK: - Scores
 
+  /// Submits a score to one or more leaderboards.
+  ///
+  /// - Parameters:
+  ///   - score: The integer score value to submit.
+  ///   - leaderboards: The target leaderboard identifiers.
+  ///   - context: Optional context value for the score (defaults to 0).
+  /// - Throws: An error if submission fails.
   public func submit(
     score: Int,
     to leaderboards: [LeaderboardID],
@@ -122,6 +149,13 @@ public actor GameCenterService {
 
   // MARK: - Achievements
 
+  /// Reports achievement progress.
+  ///
+  /// - Parameters:
+  ///   - id: The achievement identifier.
+  ///   - percentComplete: Completion percent in the range 0...100.
+  ///   - showsBanner: Whether Game Center should show a completion banner.
+  /// - Throws: An error if reporting fails.
   public func reportAchievement(
     _ id: AchievementID,
     percentComplete: Double,
@@ -145,6 +179,13 @@ public actor GameCenterService {
     achievementsCache[id.rawValue] = achievement
   }
 
+  /// Loads achievements for the local player.
+  ///
+  /// Results are cached briefly; pass `forceReload = true` to bypass the cache.
+  ///
+  /// - Parameter forceReload: Whether to force a network load.
+  /// - Returns: A list of ``AchievementProgress`` values.
+  /// - Throws: An error if loading fails.
   public func loadAchievements(
     forceReload: Bool = false
   ) async throws -> [AchievementProgress] {
@@ -167,6 +208,9 @@ public actor GameCenterService {
     return achievements.map(Self.map)
   }
 
+  /// Resets all achievement progress for the local player.
+  ///
+  /// - Throws: An error if the reset fails.
   public func resetAchievements() async throws {
     try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
       GKAchievement.resetAchievements { error in
@@ -183,6 +227,14 @@ public actor GameCenterService {
 
   // MARK: - Access Point
 
+  /// Configures the floating Game Center Access Point.
+  ///
+  /// No effect while the Game Center UI is currently presenting.
+  ///
+  /// - Parameters:
+  ///   - active: Whether the access point should be visible.
+  ///   - location: Screen corner for the access point.
+  ///   - showHighlights: Whether to show highlight content in the access point.
   @MainActor
   public func setAccessPoint(
     active: Bool,
@@ -198,6 +250,7 @@ public actor GameCenterService {
 
   // MARK: - Helpers
 
+  /// Maps a raw error to a ``GameCenterKitError`` when possible.
   static func map(_ error: Error) -> Error {
     if let gameKitError = error as? GKError {
       // TODO: map more errors?
@@ -212,6 +265,7 @@ public actor GameCenterService {
     return error
   }
 
+  /// Maps a ``GKAchievement`` to a lightweight ``AchievementProgress`` value.
   static func map(_ achievement: GKAchievement) -> AchievementProgress {
     AchievementProgress(
       id: .init(achievement.identifier),
@@ -221,6 +275,9 @@ public actor GameCenterService {
     )
   }
 
+  /// Attempts to locate the top-most presenter from the key window.
+  ///
+  /// Used as a best-effort fallback when no presenter closure is provided.
   @MainActor
   static func topViewController() -> UIViewController? {
     UIApplication.shared.connectedScenes
@@ -236,10 +293,12 @@ public actor GameCenterService {
   private var lastAchievementsLoad = Date.distantPast
 }
 
-/// Single shared delegate for Apple's dashboard ViewController.
+/// Single shared delegate for Apple's dashboard view controller that dismisses on finish.
 final class GameCenterControllerDelegate: NSObject, GKGameCenterControllerDelegate {
+  /// Shared instance used by presented ``GKGameCenterViewController`` instances.
   @MainActor static let shared = GameCenterControllerDelegate()
 
+  /// Dismisses the Game Center UI when the user finishes.
   func gameCenterViewControllerDidFinish(_ gameCenterViewController: GKGameCenterViewController) {
     Task { @MainActor in
       gameCenterViewController.dismiss(animated: true)
