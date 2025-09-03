@@ -4,6 +4,9 @@ import PackageDescription
 
 let package = Package(
   name: "GameCenterKit",
+  platforms: [
+    .iOS(.v18)
+  ],
   products: [
     .library(
       name: "GameCenterKit",
