@@ -1,0 +1,66 @@
+--allman false
+--assetliterals visual-width
+--beforemarks
+--binarygrouping 4,8
+--categorymark "MARK: %c"
+--classthreshold 0
+--closingparen balanced
+--commas always
+--conflictmarkers reject
+--decimalgrouping 3,6
+--elseposition same-line
+--enumthreshold 0
+--exponentcase lowercase
+--exponentgrouping disabled
+--extensionacl on-extension
+--extensionlength 0
+--extensionmark "MARK: - %t + %c"
+--fractiongrouping disabled
+--fragment false
+--funcattributes preserve
+--groupedextension "MARK: %c"
+--guardelse auto
+--header ignore
+--hexgrouping 4,8
+--hexliteralcase uppercase
+--stripunusedargs closure-only
+--ifdef indent
+--importgrouping testable-bottom
+--indent 2
+--indentcase false
+--lifecycle
+--linebreaks lf
+--markextensions always
+--marktypes always
+--maxwidth none
+--modifierorder
+--nospaceoperators
+--nowrapoperators
+--octalgrouping 4,8
+--operatorfunc spaced
+--ifdef no-indent
+--patternlet hoist
+--ranges spaced
+--self remove
+--selfrequired
+--semicolons inline
+--shortoptionals always
+--smarttabs enabled
+--structthreshold 0
+--tabwidth unspecified
+--trailingclosures
+--trimwhitespace always
+--typeattributes preserve
+--typemark "MARK: - %t"
+--varattributes preserve
+--voidtype void
+--wraparguments before-first
+--wrapcollections before-first
+--wrapconditions preserve
+--wrapparameters before-first
+--wrapreturntype preserve
+--xcodeindentation disabled
+--yodaswap always
+--exclude Build,SourcePackages,**/Build/**,**/SourcePackages/**,**/.build/**,DerivedData/**,*.build/**,**/*Tests/**,**/Tests/**,**/checkouts/**
+--enable isEmpty, emptyBraces, consecutiveSpaces, consecutiveBlankLines, redundantBreak, redundantPattern, leadingDelimiters, spaceAroundBraces, spaceInsideBraces, trailingCommas, strongifiedSelf, redundantReturn, blankLinesBetweenScopes, sortSwitchCases
+--disable enumNamespaces, preferKeyPath, wrapMultilineStatementBraces, blankLinesAtStartOfScope, redundantClosure, redundantInit, redundantType

@@ -1,3 +1,10 @@
+//
+//  GameCenterKitTests.swift
+//  GameCenterKit
+//
+//  Created by Daniel Birkas on 2025-09-03.
+//
+
 import Testing
 @testable import GameCenterKit
 
