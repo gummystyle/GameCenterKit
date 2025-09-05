@@ -126,10 +126,9 @@ private struct GameCenterClientKey: EnvironmentKey {
   static let defaultValue: GameCenterClient = .live
 }
 
-#if canImport(ComposableArchitecture)
-import ComposableArchitecture
+#if canImport(Dependencies)
+import Dependencies
 
-/// Composable Architecture dependency key for ``GameCenterClient``.
 public enum GameCenterDependencyKey: DependencyKey {
   public static var liveValue: GameCenterClient { .live }
   public static var previewValue: GameCenterClient { .preview }
@@ -148,7 +147,6 @@ public enum GameCenterDependencyKey: DependencyKey {
 }
 
 public extension DependencyValues {
-  /// Accessor for the ``GameCenterClient`` in TCA environments.
   var gameCenter: GameCenterClient {
     get { self[GameCenterDependencyKey.self] }
     set { self[GameCenterDependencyKey.self] = newValue }

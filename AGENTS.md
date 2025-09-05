@@ -9,7 +9,7 @@ GameCenterKit is a lightweight Swift package that wraps Apple GameKit to make Ga
 - A concurrency-safe `GameCenterService` actor over GameKit
 - An injectable `GameCenterClient` facade for apps, previews, and tests
 - SwiftUI helpers for presenting Game Center UI and the Access Point
-- Optional Composable Architecture (TCA) integration behind `#if canImport(ComposableArchitecture)`
+- Optional `swift-dependencies` integration (usable with or without TCA) behind `#if canImport(Dependencies)`
 
 Targets: iOS 18+, Swift tools 6.2.
 
@@ -23,7 +23,7 @@ Targets: iOS 18+, Swift tools 6.2.
 - `GameCenterClient` (struct)
   - Thin, `Sendable` facade exposing closure properties for each operation.
   - `GameCenterClient.live` forwards to `GameCenterService.shared`.
-  - `preview` and TCA `testValue` provide no-op/mock behavior.
+  - `preview` and Dependencies `testValue` provide no-op/mock behavior.
 
 - `GameCenterUI`
   - SwiftUI wrappers for the Game Center dashboard and Access Point.
@@ -80,8 +80,8 @@ When adding a new capability (e.g., challenges, saved games), follow this sequen
 2) Thread through the client:
    - Add a closure property to `GameCenterClient` with `@Sendable` and appropriate `async/throws` signature.
    - Update the initializer to accept the new closure.
-   - Update `GameCenterClient.live` to forward to the new service method.
-   - Update `preview` and TCA `testValue` to provide harmless defaults/no-ops.
+  - Update `GameCenterClient.live` to forward to the new service method.
+  - Update `preview` and Dependencies `testValue` to provide harmless defaults/no-ops.
 
 3) SwiftUI helpers (optional):
    - If UI is involved, consider a `UIViewControllerRepresentable` wrapper.
@@ -107,7 +107,7 @@ When adding a new capability (e.g., challenges, saved games), follow this sequen
 
 Testing tips:
 
-- Mock via `GameCenterClient` in SwiftUI or TCA environments.
+- Mock via `GameCenterClient` in SwiftUI, Dependencies, or TCA environments.
 - For service logic that is mostly bridging and mapping, test the mapping helpers and client wiring.
 - Do not attempt to UI-test GameKit controllers here; rely on integration testing in the app.
 
@@ -134,11 +134,11 @@ When writing tests in this repository:
 - Prefer minimal, focused changes; do not reformat unrelated files.
 - If `swiftformat` is installed locally, you may run it before finishing. The repo depends on SwiftFormat but does not enforce CI formatting; don’t add format tooling or configs without discussion.
 
-## Conditional Dependencies (TCA)
+## Conditional Dependencies (Dependencies)
 
-- All TCA-related code is behind `#if canImport(ComposableArchitecture)`.
-- Keep these sections compiling when TCA is present, and invisible otherwise.
-- If you add new client properties, mirror them in the TCA dependency key `testValue` and `previewValue`.
+- All dependency-key integration is behind `#if canImport(Dependencies)`.
+- Keep these sections compiling when the `Dependencies` product is present, and invisible otherwise.
+- If you add new client properties, mirror them in the dependency key `testValue` and `previewValue`.
 
 ## Do / Don’t Checklist
 
@@ -147,7 +147,7 @@ Do:
 - Keep UI on the main actor; use `@MainActor` or `MainActor.run` as appropriate.
 - Use continuations to bridge GameKit callbacks; resume once; map errors.
 - Maintain `Sendable` constraints across public API and closures.
-- Update `live`, `preview`, and TCA `testValue` when adding client operations.
+- Update `live`, `preview`, and Dependencies `testValue` when adding client operations.
 - Add concise doc comments for all public APIs.
 
 Don’t:

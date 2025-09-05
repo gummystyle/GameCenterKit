@@ -7,7 +7,7 @@ A lightweight Swift Package that wraps Apple GameKit to make Game Center integra
 - Submit scores to one or more leaderboards
 - Report and load achievement progress (with basic caching)
 - Control the floating Game Center Access Point
-- Dependency-injection–friendly client and optional TCA integration
+- Dependency-injection–friendly client with optional Dependencies/TCA integration
 
 ## Requirements
 
@@ -27,6 +27,24 @@ A lightweight Swift Package that wraps Apple GameKit to make Game Center integra
 ],
 .targets: [
   .target(name: "YourApp", dependencies: ["GameCenterKit"])
+]
+```
+
+Optional (for `@Dependency` integration): add Point‑Free's `swift-dependencies` package and link the `Dependencies` product to any target that wants to use the dependency key:
+
+```swift
+.dependencies: [
+  .package(url: "https://github.com/your-org/GameCenterKit.git", from: "0.1.0"),
+  .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.9.4")
+],
+.targets: [
+  .target(
+    name: "YourApp",
+    dependencies: [
+      "GameCenterKit",
+      .product(name: "Dependencies", package: "swift-dependencies")
+    ]
+  )
 ]
 ```
 
@@ -174,25 +192,28 @@ The view modifier automatically disables the access point on disappear. Prefer t
 ## Dependency Injection and Testing
 
 - SwiftUI: access `@Environment(\.gameCenterClient)`; default is `.live`.
-- For previews/tests, construct a custom client or (if using TCA) use the provided dependency key.
+- For previews/tests, construct a custom client or (if using Dependencies or TCA) use the provided dependency key.
 
-Composable Architecture integration (if you import TCA):
+Integration via `swift-dependencies` (works with or without TCA):
 
 ```swift
-import ComposableArchitecture
+import Dependencies
 import GameCenterKit
 
-@Reducer
-struct Feature {
+struct SomeType {
   @Dependency(\.gameCenter) var gameCenter
-  // ...
+  // use gameCenter in your logic
 }
 ```
 
-For tests:
+With TCA, you can access the same dependency key from a reducer using `@Dependency`.
+
+For tests (plain Dependencies example):
 
 ```swift
-store.dependencies.gameCenter = .init(
+import Dependencies
+
+let client = GameCenterClient(
   isAuthenticated: { true },
   authenticate: { _ in Player(displayName: "Tester", playerID: "TEST") },
   presentDashboard: { _, _ in },
@@ -202,9 +223,15 @@ store.dependencies.gameCenter = .init(
   resetAchievements: {},
   setAccessPoint: { _, _, _ in }
 )
+
+withDependencies {
+  $0.gameCenter = client
+} operation: {
+  // run code under test that reads @Dependency(\.gameCenter)
+}
 ```
 
-Note: All TCA integration is behind `#if canImport(ComposableArchitecture)` and is hidden unless TCA is present.
+Note: Dependency-key integration is behind `#if canImport(Dependencies)` and is available whenever the `Dependencies` product is linked (including when using TCA, which itself depends on Dependencies).
 
 ## Error Handling
 

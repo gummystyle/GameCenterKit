@@ -13,10 +13,15 @@ let package = Package(
       targets: ["GameCenterKit"]
     ),
   ],
-  dependencies: [],
+  dependencies: [
+    .package(url: "https://github.com/pointfreeco/swift-dependencies", from: "1.9.4"),
+  ],
   targets: [
     .target(
-      name: "GameCenterKit"
+      name: "GameCenterKit",
+      dependencies: [
+        .product(name: "Dependencies", package: "swift-dependencies")
+      ]
     ),
     .testTarget(
       name: "GameCenterKitTests",
