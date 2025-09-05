@@ -42,3 +42,6 @@ presentation in SwiftUI, use ``GameCenterDashboardView`` and the ``View/gameCent
 - ``GameCenterDashboardView``
 - ``View/gameCenterAccessPoint(isActive:location:showsHighlights:)``
 
+### Access Point Location
+
+- ``AccessPointLocation``

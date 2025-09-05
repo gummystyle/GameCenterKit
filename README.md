@@ -112,8 +112,6 @@ let achievements = try await gameCenter.loadAchievements(false)
 ### 5) Show the Access Point (SwiftUI)
 
 ```swift
-import GameKit
-
 struct RootView: View {
   var body: some View {
     ContentView()

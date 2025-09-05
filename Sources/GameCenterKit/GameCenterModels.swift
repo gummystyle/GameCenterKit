@@ -8,6 +8,17 @@
 import Foundation
 import GameKit
 
+/// Location for the floating Game Center Access Point.
+///
+/// This type mirrors the common positions supported by GameKit but avoids
+/// leaking `GKAccessPoint.Location` through public APIs.
+public enum AccessPointLocation: Sendable, Equatable {
+  case topLeading
+  case topTrailing
+  case bottomLeading
+  case bottomTrailing
+}
+
 /// A type-safe identifier for a Game Center leaderboard.
 ///
 /// Wraps the string identifier you configure in App Store Connect.

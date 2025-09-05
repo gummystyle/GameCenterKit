@@ -17,9 +17,7 @@ public struct PresenterReader<Content: View>: View {
   }
 
   public var body: some View {
-    content { [weak presenter] in
-      presenter
-    }
+    content { presenter }
     .background(
       PresenterResolver { viewController in
         self.presenter = viewController
@@ -35,12 +33,11 @@ private struct PresenterResolver: UIViewControllerRepresentable {
     UIViewController()
   }
 
+  @MainActor
   func updateUIViewController(
     _ uiViewController: UIViewController,
     context: Context
   ) {
-    Task { @MainActor in
-      onResolve(uiViewController)
-    }
+    onResolve(uiViewController)
   }
 }

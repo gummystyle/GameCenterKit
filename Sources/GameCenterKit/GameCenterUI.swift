@@ -69,13 +69,13 @@ public struct GameCenterAccessPointModifier: ViewModifier {
   /// Whether the access point is visible.
   public let isActive: Bool
   /// Screen corner for the access point.
-  public let location: GKAccessPoint.Location
+  public let location: AccessPointLocation
   /// Whether to show highlight content in the access point.
   public let showsHighlights: Bool
 
   public init(
     isActive: Bool,
-    location: GKAccessPoint.Location = .topLeading,
+    location: AccessPointLocation = .topLeading,
     showsHighlights: Bool = true
   ) {
     self.isActive = isActive
@@ -86,7 +86,7 @@ public struct GameCenterAccessPointModifier: ViewModifier {
   public func body(content: Content) -> some View {
     content
       .task {
-        GKAccessPoint.shared.location = location
+        GKAccessPoint.shared.location = map(location)
         GKAccessPoint.shared.showHighlights = showsHighlights
         GKAccessPoint.shared.isActive = isActive
       }
@@ -105,7 +105,7 @@ public extension View {
   ///   - showsHighlights: Whether to show highlight content in the access point.
   func gameCenterAccessPoint(
     isActive: Bool,
-    location: GKAccessPoint.Location = .topLeading,
+    location: AccessPointLocation = .topLeading,
     showsHighlights: Bool = true
   ) -> some View {
     modifier(
@@ -115,5 +115,16 @@ public extension View {
         showsHighlights: showsHighlights
       )
     )
+  }
+}
+
+// MARK: - Private helpers
+
+private func map(_ location: AccessPointLocation) -> GKAccessPoint.Location {
+  switch location {
+  case .topLeading: return .topLeading
+  case .topTrailing: return .topTrailing
+  case .bottomLeading: return .bottomLeading
+  case .bottomTrailing: return .bottomTrailing
   }
 }

@@ -185,7 +185,8 @@ public actor GameCenterService {
   ) async throws {
     guard isAuthenticated else { throw GameCenterKitError.notAuthenticated }
     let achievement = GKAchievement(identifier: id.rawValue)
-    achievement.percentComplete = percentComplete
+    let clampedPercent = max(0, min(100, percentComplete))
+    achievement.percentComplete = clampedPercent
     achievement.showsCompletionBanner = showsBanner
 
     try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
@@ -261,12 +262,12 @@ public actor GameCenterService {
   @MainActor
   public func setAccessPoint(
     active: Bool,
-    location: GKAccessPoint.Location = .topLeading,
+    location: AccessPointLocation = .topLeading,
     showHighlights: Bool = true
   ) {
     guard GKAccessPoint.shared.isPresentingGameCenter == false else { return }
 
-    GKAccessPoint.shared.location = location
+    GKAccessPoint.shared.location = Self.map(location)
     GKAccessPoint.shared.showHighlights = showHighlights
     GKAccessPoint.shared.isActive = active
   }
@@ -353,6 +354,20 @@ final class GameCenterControllerDelegate: NSObject, GKGameCenterControllerDelega
   func gameCenterViewControllerDidFinish(_ gameCenterViewController: GKGameCenterViewController) {
     Task { @MainActor in
       gameCenterViewController.dismiss(animated: true)
+    }
+  }
+}
+
+// MARK: - Private mappings
+
+extension GameCenterService {
+  @MainActor
+  static func map(_ location: AccessPointLocation) -> GKAccessPoint.Location {
+    switch location {
+    case .topLeading: return .topLeading
+    case .topTrailing: return .topTrailing
+    case .bottomLeading: return .bottomLeading
+    case .bottomTrailing: return .bottomTrailing
     }
   }
 }

@@ -30,7 +30,7 @@ public struct GameCenterClient: Sendable {
   /// Resets all achievement progress.
   public var resetAchievements: @Sendable () async throws -> Void
   /// Configures the Game Center Access Point.
-  public var setAccessPoint: @Sendable (_ isActive: Bool, _ location: GKAccessPoint.Location, _ showsHighlights: Bool) async -> Void
+  public var setAccessPoint: @Sendable (_ isActive: Bool, _ location: AccessPointLocation, _ showsHighlights: Bool) async -> Void
 
   /// Creates a ``GameCenterClient`` by supplying implementations for each operation.
   ///
@@ -44,7 +44,7 @@ public struct GameCenterClient: Sendable {
     reportAchievement: @escaping @Sendable (AchievementID, Double, Bool) async throws -> Void,
     loadAchievements: @escaping @Sendable (Bool) async throws -> [AchievementProgress],
     resetAchievements: @escaping @Sendable () async throws -> Void,
-    setAccessPoint: @escaping @Sendable (Bool, GKAccessPoint.Location, Bool) async -> Void
+    setAccessPoint: @escaping @Sendable (Bool, AccessPointLocation, Bool) async -> Void
   ) {
     self.isAuthenticated = isAuthenticated
     self.authenticate = authenticate
@@ -96,6 +96,22 @@ public struct GameCenterClient: Sendable {
     resetAchievements: {},
     setAccessPoint: { _, _, _ in }
   )
+}
+
+public extension GameCenterClient {
+  /// Authenticates the local player without explicitly supplying a presenter.
+  /// The service will attempt to locate a presenter automatically.
+  @inlinable
+  func authenticate() async throws -> Player {
+    try await authenticate({ nil })
+  }
+
+  /// Presents the Game Center dashboard without explicitly supplying a presenter.
+  /// The service will attempt to locate a presenter automatically.
+  @inlinable
+  func presentDashboard(_ mode: DashboardMode) async throws {
+    try await presentDashboard(mode, { nil })
+  }
 }
 
 public extension EnvironmentValues {

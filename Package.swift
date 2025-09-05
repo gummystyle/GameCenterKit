@@ -13,9 +13,7 @@ let package = Package(
       targets: ["GameCenterKit"]
     ),
   ],
-  dependencies: [
-    .package(url: "https://github.com/nicklockwood/SwiftFormat", from: "0.55.0")
-  ],
+  dependencies: [],
   targets: [
     .target(
       name: "GameCenterKit"
