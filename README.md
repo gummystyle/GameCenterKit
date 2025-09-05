@@ -207,6 +207,12 @@ do {
 - Create leaderboards and achievements in App Store Connect; use their identifiers in code.
 - Ensure the test device (or simulator) is signed into Game Center. Some flows are more reliable on a real device.
 
+## Formatting
+
+Use SwiftFormat locally to keep code style consistent:
+
+`swiftformat Sources Tests --swiftversion 6`
+
 ## License
 
 MIT — see `LICENSE` for details.
