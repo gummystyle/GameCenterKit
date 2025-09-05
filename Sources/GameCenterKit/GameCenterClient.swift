@@ -80,9 +80,7 @@ public struct GameCenterClient: Sendable {
         try await service.resetAchievements()
       },
       setAccessPoint: { isActive, location, showsHighlights in
-        await MainActor.run {
-          service.setAccessPoint(active: isActive, location: location, showHighlights: showsHighlights)
-        }
+        await service.setAccessPoint(active: isActive, location: location, showHighlights: showsHighlights)
       }
     )
   }()
