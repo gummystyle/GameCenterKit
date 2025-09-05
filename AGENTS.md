@@ -94,6 +94,11 @@ When adding a new capability (e.g., challenges, saved games), follow this sequen
    - Prefer tests against the client and pure mapping logic.
    - Use the `Testing` package (`@Test`) rather than XCTest.
 
+## Very Important: Naming (No Abbreviations)
+
+- Do not use abbreviated variable, function, or type names anywhere in the codebase (production code, tests, examples, or docs). Prefer clear, descriptive names like `apiNotAvailableError` over `apiNA`, and `achievement` over `gk`. Readability and intent trump brevity.
+- Exceptions: widely accepted acronyms (e.g., `URL`, `ID`, `HTTP`) are allowed; keep casing consistent with existing style (for example, `playerID`).
+
 ## Testing & Commands
 
 - Build: `swift build`
@@ -117,11 +122,6 @@ When writing tests in this repository:
 - Group related tests in separate files by topic (e.g., error mapping, client wiring).
 - Use `@testable import GameCenterKit` to access internal helpers like mapping functions.
 - Avoid invoking real GameKit network/UI flows; stick to pure mappings and preview/test clients.
-
-### Very Important: Naming (No Abbreviations)
-
-- Do not use abbreviated variable, function, or type names anywhere in the codebase (production code, tests, examples, or docs). Prefer clear, descriptive names like `apiNotAvailableError` over `apiNA`, and `achievement` over `gk`. Readability and intent trump brevity.
-- Exceptions: widely accepted acronyms (e.g., `URL`, `ID`, `HTTP`) are allowed; keep casing consistent with existing style (for example, `playerID`).
 
 ### Test Organization
 
