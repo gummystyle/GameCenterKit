@@ -106,6 +106,28 @@ Testing tips:
 - For service logic that is mostly bridging and mapping, test the mapping helpers and client wiring.
 - Do not attempt to UI-test GameKit controllers here; rely on integration testing in the app.
 
+### Swift Testing References
+
+- See `Tests/swift-testing-playbook.md` for style, structure, and fixtures guidance used in this repo.
+- See `Tests/swift-testing-api.md` for API reference of the Swift Testing framework available in Xcode 16+.
+
+When writing tests in this repository:
+
+- Prefer `@Test` functions with clear, descriptive names and focused assertions.
+- Group related tests in separate files by topic (e.g., error mapping, client wiring).
+- Use `@testable import GameCenterKit` to access internal helpers like mapping functions.
+- Avoid invoking real GameKit network/UI flows; stick to pure mappings and preview/test clients.
+
+### Very Important: Naming (No Abbreviations)
+
+- Do not use abbreviated variable, function, or type names anywhere in the codebase (production code, tests, examples, or docs). Prefer clear, descriptive names like `apiNotAvailableError` over `apiNA`, and `achievement` over `gk`. Readability and intent trump brevity.
+- Exceptions: widely accepted acronyms (e.g., `URL`, `ID`, `HTTP`) are allowed; keep casing consistent with existing style (for example, `playerID`).
+
+### Test Organization
+
+- Organize tests by subject, not in a single catch‑all file. Create multiple files per suite and name files after what they test (for example: `ErrorMappingTests.swift`, `AchievementMappingTests.swift`, `PreviewClientTests.swift`). Keep each suite focused and colocated with related assertions.
+- Name test functions starting with `test`, followed by clear, descriptive names of the behavior under test (for example: `testErrorMappingFromGKErrorDomainCases`, `testMapsGKAchievementToAchievementProgress`).
+
 ## Style & Formatting
 
 - Follow existing naming and doc-comment style.
@@ -185,4 +207,3 @@ public struct GameCenterClient: Sendable {
 ---
 
 If something you need isn’t covered here, prefer following existing patterns in the codebase. Keep changes minimal, actor-safe, and UI on the main actor. 
-
