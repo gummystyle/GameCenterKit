@@ -21,20 +21,19 @@ public struct GameCenterDashboardView: UIViewControllerRepresentable {
   }
 
   public func makeUIViewController(context: Context) -> GKGameCenterViewController {
-    let viewController: GKGameCenterViewController
-    switch mode {
+    let viewController: GKGameCenterViewController = switch mode {
     case let .leaderboards(id):
       if let id {
-        viewController = GKGameCenterViewController(
+        GKGameCenterViewController(
           leaderboardID: id.rawValue,
           playerScope: .global,
           timeScope: .allTime
         )
       } else {
-        viewController = GKGameCenterViewController(state: .leaderboards)
+        GKGameCenterViewController(state: .leaderboards)
       }
     case .achievements:
-      viewController = GKGameCenterViewController(state: .achievements)
+      GKGameCenterViewController(state: .achievements)
     }
 
     viewController.gameCenterDelegate = context.coordinator
@@ -122,9 +121,9 @@ public extension View {
 
 private func map(_ location: AccessPointLocation) -> GKAccessPoint.Location {
   switch location {
-  case .topLeading: return .topLeading
-  case .topTrailing: return .topTrailing
-  case .bottomLeading: return .bottomLeading
-  case .bottomTrailing: return .bottomTrailing
+  case .topLeading: .topLeading
+  case .topTrailing: .topTrailing
+  case .bottomLeading: .bottomLeading
+  case .bottomTrailing: .bottomTrailing
   }
 }

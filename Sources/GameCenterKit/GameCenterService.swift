@@ -117,20 +117,19 @@ public actor GameCenterService {
       let presenter = presenter?() ?? Self.topViewController()
       guard let presenter else { throw GameCenterKitError.invalidPresentationContext }
 
-      let viewController: GKGameCenterViewController
-      switch mode {
+      let viewController: GKGameCenterViewController = switch mode {
       case let .leaderboards(id):
         if let id {
-          viewController = GKGameCenterViewController(
+          GKGameCenterViewController(
             leaderboardID: id.rawValue,
             playerScope: .global,
             timeScope: .allTime
           )
         } else {
-          viewController = GKGameCenterViewController(state: .leaderboards)
+          GKGameCenterViewController(state: .leaderboards)
         }
       case .achievements:
-        viewController = GKGameCenterViewController(state: .achievements)
+        GKGameCenterViewController(state: .achievements)
       }
 
       viewController.gameCenterDelegate = GameCenterControllerDelegate.shared
@@ -364,10 +363,10 @@ extension GameCenterService {
   @MainActor
   static func map(_ location: AccessPointLocation) -> GKAccessPoint.Location {
     switch location {
-    case .topLeading: return .topLeading
-    case .topTrailing: return .topTrailing
-    case .bottomLeading: return .bottomLeading
-    case .bottomTrailing: return .bottomTrailing
+    case .topLeading: .topLeading
+    case .topTrailing: .topTrailing
+    case .bottomLeading: .bottomLeading
+    case .bottomTrailing: .bottomTrailing
     }
   }
 }

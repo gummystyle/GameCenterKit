@@ -18,11 +18,11 @@ public struct PresenterReader<Content: View>: View {
 
   public var body: some View {
     content { presenter }
-    .background(
-      PresenterResolver { viewController in
-        self.presenter = viewController
-      }
-    )
+      .background(
+        PresenterResolver { viewController in
+          presenter = viewController
+        }
+      )
   }
 }
 

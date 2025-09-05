@@ -103,14 +103,14 @@ public extension GameCenterClient {
   /// The service will attempt to locate a presenter automatically.
   @inlinable
   func authenticate() async throws -> Player {
-    try await authenticate({ nil })
+    try await authenticate { nil }
   }
 
   /// Presents the Game Center dashboard without explicitly supplying a presenter.
   /// The service will attempt to locate a presenter automatically.
   @inlinable
   func presentDashboard(_ mode: DashboardMode) async throws {
-    try await presentDashboard(mode, { nil })
+    try await presentDashboard(mode) { nil }
   }
 }
 

@@ -64,15 +64,15 @@ public enum GameCenterKitError: LocalizedError, Sendable {
   public var errorDescription: String? {
     switch self {
     case .notAuthenticated:
-      return "Game Center player is not authenticated."
+      "Game Center player is not authenticated."
     case .cancelled:
-      return "Game Center authentication was cancelled."
+      "Game Center authentication was cancelled."
     case .invalidPresentationContext:
-      return "No view controller available to present Game Center UI."
+      "No view controller available to present Game Center UI."
     case .gameCenterUnavailable:
-      return "Game Center is not available on this device or is restricted."
+      "Game Center is not available on this device or is restricted."
     case let .underlyingError(message):
-      return message
+      message
     }
   }
 }
