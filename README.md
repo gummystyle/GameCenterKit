@@ -60,10 +60,14 @@ struct ContentView: View {
 }
 ```
 
-You can also call the service directly (falls back to a best-effort presenter lookup if not provided):
+You can also use the client/service without a presenter (falls back to a best‑effort presenter lookup):
 
 ```swift
-let player = try await GameCenterService.shared.authenticate()
+// Client convenience (no presenter required)
+let player = try await gameCenter.authenticate()
+
+// Or call the service directly
+let player2 = try await GameCenterService.shared.authenticate()
 ```
 
 ### 2) Present the Game Center dashboard (SwiftUI)
@@ -82,6 +86,23 @@ PresenterReader { presenter in
       Task { try await gameCenter.presentDashboard(.achievements, presenter) }
     }
   }
+}
+```
+
+Or use the client convenience without a presenter:
+
+```swift
+try await gameCenter.presentDashboard(.achievements)
+```
+
+SwiftUI-only approach: embed the dashboard with a sheet using `GameCenterDashboardView`:
+
+```swift
+@State private var showDashboard = false
+
+Button("Open Dashboard") { showDashboard = true }
+.sheet(isPresented: $showDashboard) {
+  GameCenterDashboardView(mode: .leaderboards())
 }
 ```
 
@@ -109,6 +130,8 @@ try await gameCenter.reportAchievement(
 let achievements = try await gameCenter.loadAchievements(false)
 ```
 
+Tip: `forceReload` defaults to `false`, so `try await gameCenter.loadAchievements()` uses the short cache window.
+
 ### 5) Show the Access Point (SwiftUI)
 
 ```swift
@@ -126,6 +149,8 @@ Or via the client/service:
 await gameCenter.setAccessPoint(true, .topLeading, true)
 ```
 
+The view modifier automatically disables the access point on disappear. Prefer the modifier in SwiftUI screens, and the client/service for one‑off imperative updates.
+
 ## API Overview
 
 - `GameCenterService` (actor): Concurrency-safe facade over GameKit
@@ -139,6 +164,7 @@ await gameCenter.setAccessPoint(true, .topLeading, true)
 - `GameCenterClient` (struct): Injectable thin wrapper
   - `GameCenterClient.live` bridges to `GameCenterService.shared`
   - `EnvironmentValues.gameCenterClient` (SwiftUI)
+  - Convenience: `authenticate()` and `presentDashboard(_:)` that locate a presenter automatically
 - `GameCenterUI`
   - `GameCenterDashboardView` (SwiftUI wrapper for `GKGameCenterViewController`)
   - `.gameCenterAccessPoint(...)` view modifier
@@ -178,6 +204,8 @@ store.dependencies.gameCenter = .init(
 )
 ```
 
+Note: All TCA integration is behind `#if canImport(ComposableArchitecture)` and is hidden unless TCA is present.
+
 ## Error Handling
 
 `GameCenterKitError` provides readable errors such as:
@@ -198,6 +226,16 @@ do {
   print(error.localizedDescription)
 } catch {
   print(error)
+}
+```
+
+You can also quickly gate UI based on authentication state:
+
+```swift
+if gameCenter.isAuthenticated() {
+  LeaderboardView()
+} else {
+  SignInPrompt()
 }
 ```
 
