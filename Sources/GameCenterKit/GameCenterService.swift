@@ -74,7 +74,6 @@ public actor GameCenterService {
           }
 
           if player.isAuthenticated {
-            self.achievementsCache.removeAll()
             continuation.resume(
               returning: Player(
                 displayName: player.displayName,
@@ -91,7 +90,10 @@ public actor GameCenterService {
     authTask = task
     do {
       defer { self.authTask = nil }
-      return try await task.value
+      let player = try await task.value
+      // Clear achievement cache after a successful authentication on the actor.
+      achievementsCache.removeAll()
+      return player
     }
   }
 
@@ -150,6 +152,7 @@ public actor GameCenterService {
     to leaderboards: [LeaderboardID],
     context: Int = 0
   ) async throws {
+    guard isAuthenticated else { throw GameCenterKitError.notAuthenticated }
     try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
       GKLeaderboard.submitScore(
         score,
@@ -180,6 +183,7 @@ public actor GameCenterService {
     percentComplete: Double,
     showsBanner: Bool = true
   ) async throws {
+    guard isAuthenticated else { throw GameCenterKitError.notAuthenticated }
     let achievement = GKAchievement(identifier: id.rawValue)
     achievement.percentComplete = percentComplete
     achievement.showsCompletionBanner = showsBanner
