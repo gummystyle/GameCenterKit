@@ -84,10 +84,10 @@ public struct GameCenterAccessPointModifier: ViewModifier {
 
   public func body(content: Content) -> some View {
     content
-      .onAppear { apply() }
-      .onChange(of: isActive) { _ in apply() }
-      .onChange(of: location) { _ in apply() }
-      .onChange(of: showsHighlights) { _ in apply() }
+      .task { apply() }
+      .task(id: isActive) { apply() }
+      .task(id: location) { apply() }
+      .task(id: showsHighlights) { apply() }
       .onDisappear { GKAccessPoint.shared.isActive = false }
   }
 
