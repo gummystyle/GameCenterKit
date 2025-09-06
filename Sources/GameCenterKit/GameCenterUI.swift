@@ -74,7 +74,7 @@ public struct GameCenterAccessPointModifier: ViewModifier {
 
   public init(
     isActive: Bool,
-    location: AccessPointLocation = .topLeading,
+    location: AccessPointLocation = .topTrailing,
     showsHighlights: Bool = true
   ) {
     self.isActive = isActive
@@ -84,14 +84,18 @@ public struct GameCenterAccessPointModifier: ViewModifier {
 
   public func body(content: Content) -> some View {
     content
-      .task {
-        GKAccessPoint.shared.location = map(location)
-        GKAccessPoint.shared.showHighlights = showsHighlights
-        GKAccessPoint.shared.isActive = isActive
-      }
-      .onDisappear {
-        GKAccessPoint.shared.isActive = false
-      }
+      .onAppear { apply() }
+      .onChange(of: isActive) { _ in apply() }
+      .onChange(of: location) { _ in apply() }
+      .onChange(of: showsHighlights) { _ in apply() }
+      .onDisappear { GKAccessPoint.shared.isActive = false }
+  }
+
+  @MainActor
+  private func apply() {
+    GKAccessPoint.shared.location = map(location)
+    GKAccessPoint.shared.showHighlights = showsHighlights
+    GKAccessPoint.shared.isActive = isActive
   }
 }
 
