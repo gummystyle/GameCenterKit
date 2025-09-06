@@ -69,7 +69,7 @@ struct ContentView: View {
             let player = try await gameCenter.authenticate(presenter)
             print("Authenticated:", player.displayName)
           } catch {
-            print("Auth failed:", error)
+            print("Authentication failed:", error)
           }
         }
       }
@@ -238,7 +238,7 @@ Note: Dependency-key integration is behind `#if canImport(Dependencies)` and is 
 `GameCenterKitError` provides readable errors such as:
 
 - `notAuthenticated`: player not signed in
-- `cancelled`: user dismissed auth flow
+- `cancelled`: user dismissed the authentication flow
 - `invalidPresentationContext`: no view controller to present from
 - `gameCenterUnavailable`: not available or restricted on device
 - `underlyingError(String)`: message from GameKit

@@ -47,49 +47,22 @@ public actor GameCenterService {
     }
 
     // Coalesce concurrent authenticate calls onto the same in-flight task
-    if let task = authTask {
+    if let task = authenticationTask {
       return try await task.value
     }
 
     let task = Task { () throws -> Player in
       try await withCheckedThrowingContinuation { continuation in
-        let player = GKLocalPlayer.local
-        player.authenticateHandler = { viewController, error in
-          if let error {
-            continuation.resume(throwing: Self.map(error))
-            return
-          }
-
-          if let viewController {
-            Task { @MainActor in
-              let presenter = presenter?() ?? Self.topViewController()
-              guard let presenter else {
-                continuation.resume(throwing: GameCenterKitError.invalidPresentationContext)
-                return
-              }
-              presenter.present(viewController, animated: true)
-            }
-            // Handler will be called again after user interaction.
-            return
-          }
-
-          if player.isAuthenticated {
-            continuation.resume(
-              returning: Player(
-                displayName: player.displayName,
-                playerID: player.gamePlayerID
-              )
-            )
-          } else {
-            continuation.resume(throwing: GameCenterKitError.cancelled)
-          }
+        // Hop onto the service actor to install the handler
+        Task { [weak self] in
+          await self?.startAuthentication(presenter: presenter, continuation: continuation)
         }
       }
     }
 
-    authTask = task
+    authenticationTask = task
     do {
-      defer { self.authTask = nil }
+      defer { self.authenticationTask = nil }
       let player = try await task.value
       // Clear achievement cache after a successful authentication on the actor.
       achievementsCache.removeAll()
@@ -325,23 +298,103 @@ public actor GameCenterService {
     if let presented = root.presentedViewController {
       return topViewController(from: presented)
     }
-    if let nav = root as? UINavigationController {
-      return topViewController(from: nav.visibleViewController ?? nav.topViewController) ?? nav
+    if let navigationController = root as? UINavigationController {
+      return topViewController(from: navigationController.visibleViewController ?? navigationController.topViewController) ?? navigationController
     }
-    if let tab = root as? UITabBarController {
-      return topViewController(from: tab.selectedViewController) ?? tab
+    if let tabBarController = root as? UITabBarController {
+      return topViewController(from: tabBarController.selectedViewController) ?? tabBarController
     }
-    if let split = root as? UISplitViewController {
-      return topViewController(from: split.viewControllers.last) ?? split
+    if let splitViewController = root as? UISplitViewController {
+      return topViewController(from: splitViewController.viewControllers.last) ?? splitViewController
     }
     return root
+  }
+
+  // MARK: - Authentication internals
+
+  private var authenticationContinuation: CheckedContinuation<Player, Error>?
+  private var didResumeAuthentication = false
+
+  private func startAuthentication(
+    presenter: (@MainActor () -> UIViewController?)?,
+    continuation: CheckedContinuation<Player, Error>
+  ) {
+    // actor-isolated
+    authenticationContinuation = continuation
+    didResumeAuthentication = false
+
+    GKLocalPlayer.local.authenticateHandler = { [weak self] viewController, error in
+      // Bounce back to the service actor for serialized handling
+      Task { [weak self] in
+        await self?.handleAuthenticationCallback(
+          viewController: viewController,
+          error: error,
+          presenter: presenter
+        )
+      }
+    }
+  }
+
+  private func resumeAuthenticationOnce(_ result: Result<Player, Error>) {
+    guard didResumeAuthentication == false else { return }
+    didResumeAuthentication = true
+    // Detach further callbacks
+    GKLocalPlayer.local.authenticateHandler = nil
+
+    guard let continuation = authenticationContinuation else { return }
+    authenticationContinuation = nil
+    switch result {
+    case let .success(player):
+      continuation.resume(returning: player)
+    case let .failure(error):
+      continuation.resume(throwing: error)
+    }
+  }
+
+  private func handleAuthenticationCallback(
+    viewController: UIViewController?,
+    error: Error?,
+    presenter: (@MainActor () -> UIViewController?)?
+  ) async {
+    if let error {
+      resumeAuthenticationOnce(.failure(Self.map(error)))
+      return
+    }
+
+    if let viewController {
+      // Present UI on the main actor; evaluate success on actor afterwards.
+      let presented: Bool = await MainActor.run {
+        let presentingViewController = presenter?() ?? Self.topViewController()
+        guard let presentingViewController else { return false }
+        presentingViewController.present(viewController, animated: true)
+        return true
+      }
+      if presented == false {
+        resumeAuthenticationOnce(.failure(GameCenterKitError.invalidPresentationContext))
+      }
+      return
+    }
+
+    let player = GKLocalPlayer.local
+    if player.isAuthenticated {
+      resumeAuthenticationOnce(
+        .success(
+          Player(
+            displayName: player.displayName,
+            playerID: player.gamePlayerID
+          )
+        )
+      )
+    } else {
+      resumeAuthenticationOnce(.failure(GameCenterKitError.cancelled))
+    }
   }
 
   // MARK: - Caches
 
   private var achievementsCache: [String: GKAchievement] = [:]
   private var lastAchievementsLoad = Date.distantPast
-  private var authTask: Task<Player, Error>?
+  private var authenticationTask: Task<Player, Error>?
 }
 
 /// Single shared delegate for Apple's dashboard view controller that dismisses on finish.
